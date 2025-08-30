@@ -14,12 +14,18 @@
 string KotkiTranslationModel::translate(string input) {
   if(!initialized) { this->load(); }
 
-  Batch batch;
   marian::Ptr<Request> request = model->makeRequest(std::move(input), m_cache);
 
   model->enqueueRequest(request);
-  model->generateBatch(batch);
-  model->translateBatch(0, batch);
+  // Loop to process all batches from the request
+  while (true) {
+      Batch batch;
+      // If generateBatch returns 0, it means there are no more segments to process.
+      if (model->generateBatch(batch) == 0) {
+          break;
+      }
+      model->translateBatch(0, batch);
+  }
 
   return request->response.target.text;
 }
