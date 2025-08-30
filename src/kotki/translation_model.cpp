@@ -59,12 +59,16 @@ void TranslationModel::loadBackend(size_t idx) {
   graph->setDevice(device_);
   graph->getBackend()->configureDevice(options_);
 
-#ifdef __arm__
+#if defined(__arm__)
   graph->reserveWorkspaceMB(128);
-#elif __x86_64__
+#elif defined(__aarch64__)
+  graph->reserveWorkspaceMB(256);
+#elif defined(__x86_64__)
   graph->reserveWorkspaceMB(512);
 #else
-  throw std::runtime_error("unknown arch");
+  #warning "Compiling for an unknown architecture, using a default workspace size."
+  // Fallback to a default value instead of crashing
+  graph->reserveWorkspaceMB(128);
 #endif
 
   // Marian Model: Load from memoryBundle or shortList
